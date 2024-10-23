@@ -9,6 +9,7 @@ mni_project=true
 
 #    Getopts is used by shell procedures to parse positional parameters.
 #    Check for the optional flags that were provided in the pd_dockerParallelized.sh script
+
 while getopts f:a:j:c:b:s:l:r:p:o:n:m: flag
 do
         case "${flag}" in

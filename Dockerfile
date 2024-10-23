@@ -5,6 +5,7 @@
 # Thank you for using Neurodocker. If you discover any issues
 # or ways to improve this software, please submit an issue or
 # pull request on our GitHub repository:
+
 # /app/main.sh -f test.nii.gz -j test.json -a mprage.nii.gz -o /out
 #     https://github.com/kaczmarj/neurodocker
 
