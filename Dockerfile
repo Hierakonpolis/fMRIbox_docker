@@ -41,8 +41,6 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
 
 ENTRYPOINT ["/neurodocker/startup.sh"]
 
-COPY pd_dockerParallelized.sh /main.sh
-
 
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
@@ -153,9 +151,11 @@ RUN apt-get update -qq && apt-get install -y tcsh xfonts-base python-qt4       \
                         && apt-get clean \
                         && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /app
-WORKDIR /app
 #RUN mkdir /temp && chmod 777 /temp
-RUN curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries
+RUN curl -O --insecure https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries
 RUN ln -s /usr/lib/x86_64-linux-gnu/libgsl.so.23 /usr/lib/x86_64-linux-gnu/libgsl.so.19
 RUN tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /usr/local/AFNIbin
+
+RUN mkdir /app
+WORKDIR /app
+COPY pd_dockerParallelized.sh /app/main.sh

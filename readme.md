@@ -1,4 +1,8 @@
-# nshor\_docker
+# fMRIbox\_docker
+
+This fork is not intended to be merged back into the original.
+The idea is to be free to diverge to add more functionality for my use cases. 
+For now on, keeping the original description.
 
 ## About
 The preprocessing script pd\_dockerParallelized.sh takes the functional and anatomical MRI files and produces a smoothed, registered NIfTI file in MNI 152 space. If the appropriate field maps and acquisition parameters are provided as input from the user, TOPUP and bias correction take place. Otherwise, they are skipped. 
@@ -69,7 +73,7 @@ singularity build --writable-tmpfs output.sif docker-daemon://fmriproc:latest
 
 ## Process A Single File
 ```bash
-singularity exec --writable-tmpfs --bind $func_bind:/func,$anat_bind:/anat,$out_bind:/out $SIF_FILE /main.sh -f $func_file -a $anat_file -o $out_bind
+singularity exec --writable-tmpfs --bind $func_bind:/func,$anat_bind:/anat,$out_bind:/out $SIF_FILE /app/main.sh -f $func_file -a $anat_file -o $out_bind
 ```
 
 #### Mandatory:
@@ -177,7 +181,7 @@ func_bind=`dirname $func_filepath`
 anat_file=`basename $anat_filepath`
 func_file=`basename $func_filepath`
 
-singularity exec --writable-tmpfs --bind $func_bind:/func,$anat_bind:/anat,$out_bind:/out $SIF_FILE /main.sh -f $func_file -a $anat_file -o $out_bind &
+singularity exec --writable-tmpfs --bind $func_bind:/func,$anat_bind:/anat,$out_bind:/out $SIF_FILE /app/main.sh -f $func_file -a $anat_file -o $out_bind &
 
 wait
 
