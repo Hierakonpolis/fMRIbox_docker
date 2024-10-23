@@ -5,7 +5,7 @@
 # Thank you for using Neurodocker. If you discover any issues
 # or ways to improve this software, please submit an issue or
 # pull request on our GitHub repository:
-# 
+# /app/main.sh -f test.nii.gz -j test.json -a mprage.nii.gz -o /out
 #     https://github.com/kaczmarj/neurodocker
 
 FROM neurodebian:bionic-non-free
@@ -38,8 +38,6 @@ RUN export ND_ENTRYPOINT="/neurodocker/startup.sh" \
     &&   echo 'if [ -n "$1" ]; then "$@"; else /usr/bin/env bash; fi' >> "$ND_ENTRYPOINT"; \
     fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
-
-ENTRYPOINT ["/neurodocker/startup.sh"]
 
 
 RUN apt-get update -qq \
@@ -155,10 +153,12 @@ RUN apt-get update -qq && apt-get install -y tcsh xfonts-base python-qt4       \
 RUN curl -O --insecure https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries
 RUN ln -s /usr/lib/x86_64-linux-gnu/libgsl.so.23 /usr/lib/x86_64-linux-gnu/libgsl.so.19
 RUN tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /usr/local/AFNIbin
+ENTRYPOINT ["/neurodocker/startup.sh"]
 
 VOLUME /func
 VOLUME /anat
 VOLUME /params
+VOLUME /out
 
 RUN mkdir /app
 WORKDIR /app
