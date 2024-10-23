@@ -156,6 +156,10 @@ RUN curl -O --insecure https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.
 RUN ln -s /usr/lib/x86_64-linux-gnu/libgsl.so.23 /usr/lib/x86_64-linux-gnu/libgsl.so.19
 RUN tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /usr/local/AFNIbin
 
+VOLUME /func
+VOLUME /anat
+VOLUME /params
+
 RUN mkdir /app
 WORKDIR /app
 COPY pd_dockerParallelized.sh /app/main.sh
