@@ -9,6 +9,10 @@
 # /app/main.sh -f test.nii.gz -j test.json -a mprage.nii.gz -o /out
 #     https://github.com/kaczmarj/neurodocker
 
+# docker build -f Dockerfile -t neurobox:latest . && docker run --name neurobox_test --rm neurobox:latest
+
+#docker run -v /mnt/NAS/EMOATT/Dataset/sub-002/ses-day2/anat:/anat:ro -v /mnt/NAS/EMOATT/Dataset/sub-002/ses-day2/func/:/func:ro -v /mnt/NAS/workdir/docker_tests/out:/out -v /mnt/NAS/workdir/docker_tests/misc/:/dev/shm --name neurobox_test_run --pull missing neurobox:latest
+
 FROM neurodebian:bionic-non-free
 
 ARG DEBIAN_FRONTEND="noninteractive"
