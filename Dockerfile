@@ -160,6 +160,7 @@ VOLUME /func
 VOLUME /anat
 VOLUME /params
 VOLUME /out
+VOLUME /dev/shm
 
 RUN mkdir /app
 WORKDIR /app

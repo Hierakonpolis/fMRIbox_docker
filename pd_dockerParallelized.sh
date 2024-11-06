@@ -624,7 +624,7 @@ cp ${mask_filepath} ${mtdPrcDir}/${subjectID}_amask.nii
 
 
 #  Clean up shared memory directory
-rm -rf ${tmpfs}/derivatives/$subjectID
+# rm -rf ${tmpfs}/derivatives/$subjectID
 
 #  Write benchmark time to server
 end=`date +%s`
