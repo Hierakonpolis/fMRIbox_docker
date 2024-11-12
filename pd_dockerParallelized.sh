@@ -600,7 +600,6 @@ fi
 ########## HIGH MOTION CHECK ##########
 
 
-echo "WE MADE IT HERE!"
 
 #  Rename to processed filename
 cp ${procdir}/fmri_masked_resampled_blurred.nii.gz  ${procdir}/${processed_filename}
