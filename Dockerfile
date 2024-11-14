@@ -57,11 +57,49 @@ RUN apt-get update -qq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+
+USER root
+
+ENV FSLDIR="/opt/fsl-6.0.6.4" \
+    PATH="/opt/fsl-6.0.6.4/bin:$PATH" \
+    FSLOUTPUTTYPE="NIFTI_GZ" \
+    FSLMULTIFILEQUIT="TRUE" \
+    FSLTCLSH="/opt/fsl-6.0.6.4/bin/fsltclsh" \
+    FSLWISH="/opt/fsl-6.0.6.4/bin/fslwish" \
+    FSLLOCKDIR="" \
+    FSLMACHINELIST="" \
+    FSLREMOTECALL="" \
+    FSLGECUDAQ="cuda.q"
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
-           fsl-complete \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+           bc \
+           ca-certificates \
+           curl \
+           dc \
+           file \
+           libfontconfig1 \
+           libfreetype6 \
+           libgl1-mesa-dev \
+           libgl1-mesa-dri \
+           libglu1-mesa-dev \
+           libgomp1 \
+           libice6 \
+           libopenblas-base \
+           libxcursor1 \
+           libxft2 \
+           libxinerama1 \
+           libxrandr2 \
+           libxrender1 \
+           libxt6 \
+           nano \
+           python3 \
+           python3-pip \
+           sudo \
+           wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Installing FSL ..." \
+    && curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | python3 - -d /opt/fsl-6.0.6.4 -V 6.0.6.4
+
 
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
