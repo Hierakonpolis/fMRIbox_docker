@@ -2,7 +2,6 @@
 bids_dir="/media/storage2/EMOATT/BIDS"
 derivatives_folder=${bids_dir}/derivatives/neurobox
 mkdir -p "$derivatives_folder"
-prev_slots=$(tsp -S)
 slots=$(nproc)
 tsp -S "$slots"
 
@@ -29,4 +28,3 @@ done
 tsp -N "$slots" docker run -v "${derivatives_folder}":/out \
                            --rm fmribox:latest \
                            make_study_templates.sh
-tsp -S "$prev_slots"
