@@ -1,7 +1,8 @@
 #!/bin/bash
-bids_dir="/path/to/bids_dataset"
+bids_dir="/media/storage2/EMOATT/BIDS"
 derivatives_folder=${bids_dir}/derivatives/neurobox
 mkdir -p "$derivatives_folder"
+prev_slots=$(tsp -S)
 slots=$(nproc)
 tsp -S "$slots"
 
@@ -12,6 +13,7 @@ for subject_dir in "$bids_dir"/sub-*; do
 
         # Loop through all sessions for the current subject
         for session_dir in "$subject_dir"/ses-*; do
+          if [[ -d "$session_dir/func" ]]; then
             session=$(basename "$session_dir")
             tsp docker run -v "${session_dir}"/anat:/anat:ro \
                            -v "${session_dir}"/func:/func:ro \
@@ -19,7 +21,7 @@ for subject_dir in "$bids_dir"/sub-*; do
                            -v "${session_dir}"/fmap:/fmap:ro \
                            --rm fmribox:latest \
                            all_individual_tasks.sh "$subject" "$session"
-
+          fi
         done
     fi
 done
@@ -27,3 +29,4 @@ done
 tsp -N "$slots" docker run -v "${derivatives_folder}":/out \
                            --rm fmribox:latest \
                            make_study_templates.sh
+tsp -S "$prev_slots"
