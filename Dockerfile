@@ -57,15 +57,12 @@ RUN apt-get update -qq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-USER root
-
-ENV FSLDIR="/opt/fsl-6.0.6.4" \
-    PATH="/opt/fsl-6.0.6.4/bin:$PATH" \
+ENV FSLDIR="/opt/fsl" \
+    PATH="/opt/fsl/bin:$PATH" \
     FSLOUTPUTTYPE="NIFTI_GZ" \
     FSLMULTIFILEQUIT="TRUE" \
-    FSLTCLSH="/opt/fsl-6.0.6.4/bin/fsltclsh" \
-    FSLWISH="/opt/fsl-6.0.6.4/bin/fslwish" \
+    FSLTCLSH="/opt/fsl/bin/fsltclsh" \
+    FSLWISH="/opt/fsl/bin/fslwish" \
     FSLLOCKDIR="" \
     FSLMACHINELIST="" \
     FSLREMOTECALL="" \
@@ -93,13 +90,11 @@ RUN apt-get update -qq \
            libxt6 \
            nano \
            python3 \
-           python3-pip \
            sudo \
            wget \
     && rm -rf /var/lib/apt/lists/* \
     && echo "Installing FSL ..." \
-    && curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | python3 - -d /opt/fsl-6.0.6.4 -V 6.0.6.4
-
+    && curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | python3 - -d /opt/fsl -V 6.0.7.4 --extra truenet
 
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
@@ -118,7 +113,6 @@ RUN apt-get update -qq \
            awscli \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
 RUN ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.5 /usr/lib/x86_64-linux-gnu/libtiff.so.3
 
     ADD ROBEXv12.linux64.tar.gz /
@@ -128,74 +122,14 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libtiff.so.5 /usr/lib/x86_64-linux-gnu/libti
     ENV AWS_ACCESS_KEY_ID="AKIATU523SCUQEFJWBGW"
     ENV AWS_SECRET_ACCESS_KEY="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"
 
-    #COPY batchjob_for_Docker.sh /batchjob.sh
-    #COPY pd_dockerParralelized.sh /Track_1_Preproc_awsN.sh
-
-RUN echo '{ \
-    \n  "pkg_manager": "apt", \
-    \n  "instructions": [ \
-    \n    [ \
-    \n      "base", \
-    \n      "neurodebian:bionic-non-free" \
-    \n    ], \
-    \n    [ \
-    \n      "install", \
-    \n      [ \
-    \n        "afni" \
-    \n      ] \
-    \n    ], \
-    \n    [ \
-    \n      "install", \
-    \n      [ \
-    \n        "ants" \
-    \n      ] \
-    \n    ], \
-    \n    [ \
-    \n      "install", \
-    \n      [ \
-    \n        "fsl-complete" \
-    \n      ] \
-    \n    ], \
-    \n    [ \
-    \n      "install", \
-    \n      [ \
-    \n        "convert3d" \
-    \n      ] \
-    \n    ], \
-    \n    [ \
-    \n      "install", \
-    \n      [ \
-    \n        "libtiff5" \
-    \n      ] \
-    \n    ], \
-    \n    [ \
-    \n      "install", \
-    \n      [ \
-    \n        "awscli" \
-    \n      ] \
-    \n    ] \
-    \n  ] \
-    \n}' > /neurodocker/neurodocker_specs.json
-
-RUN apt-get update -qq && apt-get install -y tcsh xfonts-base python-qt4       \
-                        python-matplotlib                 \
-                        gsl-bin netpbm gnome-tweak-tool   \
-                        libjpeg62 xvfb xterm vim curl     \
-                        gedit evince eog                  \
-                        libglu1-mesa-dev libglw1-mesa     \
-                        libxm4 build-essential            \
-                        libcurl4-openssl-dev libxml2-dev  \
-                        libssl-dev libgfortran3           \
-                        gnome-terminal nautilus           \
-                        gnome-icon-theme-symbolic         \
-                        firefox xfonts-100dpi \
+RUN apt-get update -qq && apt-get install -y jq \
                         && apt-get clean \
                         && rm -rf /var/lib/apt/lists/*
 
-#RUN mkdir /temp && chmod 777 /temp
 RUN curl -O --insecure https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries
 RUN ln -s /usr/lib/x86_64-linux-gnu/libgsl.so.23 /usr/lib/x86_64-linux-gnu/libgsl.so.19
 RUN tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /usr/local/AFNIbin
+
 ENTRYPOINT ["/neurodocker/startup.sh"]
 
 VOLUME /func
@@ -203,7 +137,9 @@ VOLUME /anat
 VOLUME /params
 VOLUME /out
 VOLUME /dev/shm
+VOLUME /fmap
 
-RUN mkdir /app
+
 WORKDIR /app
-COPY pd_dockerParallelized.sh /app/main.sh
+COPY functions /app/functions
+COPY appdir_scripts/* /app
