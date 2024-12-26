@@ -2,8 +2,6 @@
 bids_dir="/media/storage2/EMOATT/BIDS"
 derivatives_folder=${bids_dir}/derivatives/neurobox
 mkdir -p "$derivatives_folder"
-slots=$(nproc)
-tsp -S "$slots"
 
 # Loop through all subjects
 for subject_dir in "$bids_dir"/sub-*; do
@@ -25,6 +23,6 @@ for subject_dir in "$bids_dir"/sub-*; do
     fi
 done
 
-tsp -N "$slots" docker run -v "${derivatives_folder}":/out \
-                           --rm fmribox:latest \
-                           make_study_templates.sh
+#tsp -N "$slots" docker run -v "${derivatives_folder}":/out \
+#                           --rm fmribox:latest \
+#                           make_study_templates.sh

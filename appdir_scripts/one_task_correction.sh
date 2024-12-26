@@ -104,7 +104,6 @@ mkdir -p $outputMount
 # Sets locations of intermediate file directories
 mocodir=${outputMount}/motion
 coregdir=${outputMount}/coregistration
-normdir=${outputMount}/normalization
 procdir=${outputMount}/processed
 anatdir=${outputMount}/anat
 funcdir=${outputMount}/func
@@ -115,13 +114,10 @@ sbrefdir=${outputMount}/SBRef
 # Non-destructively creates intermediate file directories
 mkdir -p ${coregdir}
 mkdir -p ${mocodir}
-mkdir -p ${normdir}
 mkdir -p ${procdir}
 mkdir -p ${anatdir}
 mkdir -p ${funcdir}
 mkdir -p ${fmapdir}
-mkdir -p ${biasdir}
-#mkdir -p ${sbrefdir}
 
 fmri_name=$(basename "$func_filepath" | sed -E 's/\.(nii|nii\.gz)$//')
 fmap_basename=$(basename "$spin1_file" | sed -E 's/\.(nii|nii\.gz)$//')
@@ -166,8 +162,9 @@ function fieldmap_set() {
   fi
 # Apply correction
   dwell_time=$(jq -r '.EffectiveEchoSpacing' "$json_filepath")
-
-  fugue -i $1 --dwell="${dwell_time}" --loadfmap="${fieldmap_rads_path}" --unwarpdir=y- -u $2
+  if [ ! -f "${2}" ]; then
+  fugue -i $1 --dwell="${dwell_time}" --loadfmap="${fieldmap_rads_path}" --unwarpdir=y- -u "$2"
+  fi
 }
 
 # (TOPUP Correction for Geometric Distortions)
@@ -176,8 +173,9 @@ function topup_set() {
 	# N is number of volumes in ${fmapdir}/${subjectID}_3T_Phase_Map.nii.gz	 (created as output from FSL merge function below)
 	# See here for more information: https://web.mit.edu/fsl_v5.0.10/fsl/doc/wiki/topup(2f)TopupUsersGuide.html#A--datain
 
-
-	/app/functions/get_params_spin.sh "${spin1_filepath}" "${spin1_filepath}" "${spin2_filepath}" "${spin2_filepath}" > "${params_filepath}"
+  echo "" > "${params_filepath}"
+	/app/functions/loop_get_spins.sh "${spin1_filepath}" "${params_filepath}"
+	/app/functions/loop_get_spins.sh "${spin2_filepath}" "${params_filepath}"
 
       if [ ! -f "${topup_corr}" ]; then
         # Concatenates left-right and right-left spin echo fieldmaps into one fieldmap
@@ -313,16 +311,6 @@ vrefbrain=${anat_bc_ss_path}
 #  Bias Corrected Anatomical T1 Image (Head Included)
 vrefhead=${anat_bc_path}
 
-
-if [ $mni_project = true ];  then
-	#  EPI Image of BOLD Signal
-	vepi=fmri_ts_ds_mc.nii.gz
-else
-	#  EPI Template Brain in MNI Space
-	vepi=$template
-fi
-
-
 #  Suffix for Corregistered Image
 vout="${fmri_name}_ts_ds_mc_MNIreg.nii.gz"
 
@@ -357,7 +345,12 @@ else
 fi
 
 moco_out="${fmri_name}_ds_st_mc.nii.gz"
+moco_out_path="${procdir}/${moco_out}"
 
-/usr/local/AFNIbin/3dcalc -a0 ${epi_orig} -prefix ${coregdir}/${fmri_name}.nii.gz -expr 'a*1'
+if [ ! -f "$moco_out_path" ];
+then
+  /usr/local/AFNIbin/3dcalc -a0 ${epi_orig} -prefix ${coregdir}/${fmri_name}.nii.gz -expr 'a*1'
 
-moco_sc ${sc_in} ${coregdir}/${fmri_name}.nii.gz ${subjectID}
+  moco_sc ${sc_in} ${coregdir}/${fmri_name}.nii.gz ${subjectID}
+  rm -r "${mocodir}"
+fi

@@ -1,6 +1,7 @@
 #!/bin/bash
 subject=$1
 session=$2
+correction=$3
 
 mag1_file=$(find /fmap -type f -name "sub-*_ses-*_acq-*_magnitude1.nii.gz")
 mag1_file=$(basename "$mag1_file")
@@ -18,8 +19,12 @@ anat_file=$(basename "$anat_file")
 
 for func_task in /func/*.nii.gz; do
   func_file=$(basename "$func_task")
-  ./one_task_correction.sh -f "${func_file}" -a "${anat_file}"
-  ./one_task_correction.sh -f "${func_file}" -a "${anat_file}" -b "${mag1_file}" -c "${mag2_file}" -s "${phasediff_file}"
-  ./one_task_correction.sh -f "${func_file}" -a "${anat_file}" -l "${AP_file}" -r "${PA_file}"
-  ./all_to_anat.sh "$subject" "$session"
+  if [ "$correction" == "topup" ]; then
+      ./one_task_correction.sh -f "${func_file}" -a "${anat_file}" -l "${AP_file}" -r "${PA_file}"
+  elif [ "$correction" == "fugue" ]; then
+      ./one_task_correction.sh -f "${func_file}" -a "${anat_file}" -b "${mag1_file}" -c "${mag2_file}" -s "${phasediff_file}"
+  else
+      ./one_task_correction.sh -f "${func_file}" -a "${anat_file}"
+  fi
   done
+./all_to_anat.sh "$subject" "$session"
