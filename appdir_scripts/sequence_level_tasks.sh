@@ -27,4 +27,3 @@ for func_task in /func/*.nii.gz; do
       ./one_task_correction.sh -f "${func_file}" -a "${anat_file}"
   fi
   done
-./all_to_anat.sh "$subject" "$session"
