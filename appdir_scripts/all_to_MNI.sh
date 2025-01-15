@@ -13,10 +13,12 @@ anat_t1w=($(find "/out/${subfolder}/${sesfolder}/anat" -type f -name '*_bc.nii.g
 processedfolder="/out/${subfolder}/${sesfolder}/processed" # change this for final output paths
 output_folder="/final_out/${subfolder}/${sesfolder}/processed"
 coregdir="/out/${subfolder}/${sesfolder}/coregistration"
-transform_dir="/out/${subfolder}/${sesfolder}/space-anat/transforms"
+transform_dir="/out/${subfolder}/${sesfolder}/space-anat"
+fref_dir="/out/${subfolder}/${sesfolder}/fref"
 template_transforms_dir=/out/template/template_transforms
 template_transform_prefix="$template_transforms_dir/${subfolder}_${sesfolder}_to_template"
 mkdir -p "$transform_dir"
+mkdir -p "$fref_dir"
 
 # Step 1: Categorize files into lists
 #files=($(find "$processedfolder" -type f -name '*.nii.gz'))
@@ -84,6 +86,48 @@ then
   flirt -in $anat_t1w -ref "$t1_template" -out "${template_transform_prefix}_affine.nii.gz" -omat "${template_transform_prefix}_affine.mat"
   fnirt -v --ref="$t1_template" --in="${template_transform_prefix}_affine.nii.gz" --fout="${template_transform_prefix}_warpfield.nii.gz" --iout="${template_transform_prefix}_warped.nii.gz"
 fi
+
+# Shared functional reference
+if [ ! -f "${transform_dir}/fref_to_T1w.mat" ];
+then
+  for file in ${files[@]}; do
+    file_ref_base="${fref_dir}/func_ref_${filter_str}.nii.gz"
+    fslroi "$file" "$file_ref_base" 20 1
+    break
+  done
+
+  # Do it once
+  tmpdir=$(mktemp -d)
+  for file in ${files[@]}; do
+    file_ref="${coregdir}/$(basename "$file")"
+
+    fslroi "$file" "$file_ref" 20 1
+    flirt -in "$file_ref" -ref "$file_ref_base" -out "${tmpdir}/$(basename "$file" .nii.gz)_fref.nii.gz" \
+              -omat "${tmpdir}/$(basename "$file" .nii.gz)_refspace.mat" -dof 6
+  done
+  fslmerge -t "$file_ref_base" "$tmpdir"/*.nii*
+  fslmaths ${file_ref_base} -Tmean "$file_ref_base"
+  rm -rf $tmpdir
+
+  # Do it twice :(((
+
+  tmpdir=$(mktemp -d)
+  for file in ${files[@]}; do
+    file_ref="${coregdir}/$(basename "$file")"
+
+    fslroi "$file" "$file_ref" 20 1
+    flirt -in "$file_ref" -ref "$file_ref_base" -out "${tmpdir}/$(basename "$file" .nii.gz)_fref.nii.gz" \
+              -omat "${tmpdir}/$(basename "$file" .nii.gz)_refspace.mat" -dof 6
+  done
+  fslmerge -t "$file_ref_base" "$tmpdir"/*.nii*
+  fslmaths ${file_ref_base} -Tmean "$file_ref_base"
+  rm -rf $tmpdir
+
+  # From functional template to T1w
+  flirt -in "$file_ref_base" -ref "$anat_t1w" -out "${transform_dir}/fref_to_T1w.nii.gz" \
+              -omat "${transform_dir}/fref_to_T1w.mat" -dof 6
+fi
+
 for file in ${files[@]}; do
     output="${output_folder}/$(basename "$file" .nii.gz)_space-MNI.nii.gz"
     echo "Source"
@@ -96,9 +140,9 @@ for file in ${files[@]}; do
 
       if [ ! -f "$transform_file" ];
       then
-      fslroi "$file" "$file_ref" 20 1
-      flirt -in "$file_ref" -ref "$anat_t1w" -out "${transform_dir}/$(basename "$file" .nii.gz)_template_space-T1w.nii.gz" \
-            -omat "$transform_file" -dof 6
+      flirt -in "$file_ref" -ref "$file_ref_base" -out "${fref_dir}/$(basename "$file" .nii.gz)_fref.nii.gz" \
+            -omat "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat" -dof 6
+      convert_xfm -omat "$transform_file" -concat "${transform_dir}/fref_to_T1w.mat" "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat"
       fi
 
       full_transform_file="${transform_dir}/$(basename "$file" .nii.gz)_to_MNI.nii.gz"
@@ -109,7 +153,7 @@ for file in ${files[@]}; do
       convert_xfm -omat "$pre_affine_file" -concat "${template_transform_prefix}_affine.mat" "${transform_file}"
       convertwarp -r "${mni_template}" -o "${full_transform_file}" -m "$pre_affine_file" -w "${template_transform_prefix}_warpfield.nii.gz" --midmat=/out/template/T1wRef_to_MNI1mm_affine.mat --warp2=/out/template/T1wRef_to_MNI1mm_warpfield.nii.gz
       invwarp -w "${full_transform_file}" -o "${full_transform_inverse}" -r "$file"
-      apply_transform_to_timeseries "$file" "${mni_template}" "$full_transform_file" "$output"
+#      apply_transform_to_timeseries "$file" "${mni_template}" "$full_transform_file" "$output"
 
       fi
 done
