@@ -322,26 +322,22 @@ skullstrip "${anatdir}"
 func_topup_corr="${funcdir}/${fmri_name}_topup"
 func_fugue_corr="${funcdir}/${fmri_name}_fugue"
 
-if [[ (-z "$phasediff_filepath") || (-z "$biasmag2_filepath") ]]
-then
-    echo "Phase diff and magnitute maps were not included for FUGUE correction."
-    sc_in=${epi_orig}
-else
-    fieldmap_set $epi_orig $func_fugue_corr
+if [[ (-e "$phasediff_filepath") && (-e "$biasmag2_filepath") ]]; then
+    # Both phasediff and biasmag2 files exist
+    fieldmap_set "$epi_orig" "$func_fugue_corr"
     sc_in=${func_fugue_corr}.nii.gz
     fmri_name="${fmri_name}_fugue"
-fi
 
-#  Checks if necessary fieldmasps were provided before calling the function for fMRI topup (optional)
-if [[ (-z "${spin2_filepath}") || (-z "${spin2_filepath}") ]]
-then
-        echo "Spin echo field maps were not included for TOPUP correction."
-        sc_in=${epi_orig}
+elif [[ (-e "${spin2_filepath}") && (-e "${spin2_filepath}") ]]; then
+    # Both spin echo field maps exist
+    topup_set "$epi_orig" "$func_topup_corr"
+    sc_in=${func_topup_corr}.nii.gz
+    fmri_name="${fmri_name}_topup"
 
 else
-        topup_set "$epi_orig" "$func_topup_corr"
-        sc_in=${func_topup_corr}.nii.gz
-        fmri_name="${fmri_name}_topup"
+    # Neither set of field maps exists
+    echo "Neither FUGUE nor TOPUP correction could be performed. Using original EPI."
+    sc_in=${epi_orig}
 fi
 
 moco_out="${fmri_name}_ds_st_mc.nii.gz"
