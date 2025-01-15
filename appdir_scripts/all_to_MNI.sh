@@ -153,7 +153,7 @@ for file in ${files[@]}; do
       convert_xfm -omat "$pre_affine_file" -concat "${template_transform_prefix}_affine.mat" "${transform_file}"
       convertwarp -r "${mni_template}" -o "${full_transform_file}" -m "$pre_affine_file" -w "${template_transform_prefix}_warpfield.nii.gz" --midmat=/out/template/T1wRef_to_MNI1mm_affine.mat --warp2=/out/template/T1wRef_to_MNI1mm_warpfield.nii.gz
       invwarp -w "${full_transform_file}" -o "${full_transform_inverse}" -r "$file"
-#      apply_transform_to_timeseries "$file" "${mni_template}" "$full_transform_file" "$output"
+      apply_transform_to_timeseries "$file" "${mni_template}" "$full_transform_file" "$output"
 
       fi
 done
