@@ -134,7 +134,7 @@ ENTRYPOINT ["/neurodocker/startup.sh"]
 
 VOLUME /func
 VOLUME /anat
-VOLUME /params
+VOLUME /final_out
 VOLUME /out
 VOLUME /dev/shm
 VOLUME /fmap
