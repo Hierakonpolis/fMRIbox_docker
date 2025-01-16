@@ -138,12 +138,12 @@ for file in ${files[@]}; do
       file_ref="${coregdir}/$(basename "$file")"
       transform_file="${transform_dir}/$(basename "$file" .nii.gz)_to_T1w.mat"
 
-      if [ ! -f "$transform_file" ];
+      if [ ! -f "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat" ];
       then
       flirt -in "$file_ref" -ref "$file_ref_base" -out "${fref_dir}/$(basename "$file" .nii.gz)_fref.nii.gz" \
             -omat "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat" -dof 6
-      convert_xfm -omat "$transform_file" -concat "${transform_dir}/fref_to_T1w.mat" "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat"
       fi
+      convert_xfm -omat "$transform_file" -concat "${transform_dir}/fref_to_T1w.mat" "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat"
 
       full_transform_file="${transform_dir}/$(basename "$file" .nii.gz)_to_MNI.nii.gz"
       full_transform_inverse="${transform_dir}/MNI_to_$(basename "$file" .nii.gz).nii.gz"
