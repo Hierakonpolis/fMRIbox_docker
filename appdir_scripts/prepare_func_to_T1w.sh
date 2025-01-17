@@ -5,13 +5,11 @@ set -x
 # ./all_to_MNI.sh sub-024 ses-day3
 mni_template=$FSLDIR/data/standard/MNI152_T1_1mm.nii.gz
 mni_template_2mm=$FSLDIR/data/standard/MNI152_T1_2mm.nii.gz
-t1_template=/out/template/T1w_bc_template.nii.gz
 subfolder=$1
 sesfolder=$2
 filter_str=$3
-anat_t1w=($(find "/out/${subfolder}/${sesfolder}/anat" -type f -name '*_bc.nii.gz'))
+anat_t1w=($(find "/out/${subfolder}/${sesfolder}/anat" -type f -name '*_bc_ss.nii.gz'))
 processedfolder="/out/${subfolder}/${sesfolder}/processed"
-output_folder="/final_out/${subfolder}/${sesfolder}/processed"  # change this for final output paths
 coregdir="/out/${subfolder}/${sesfolder}/coregistration"
 transform_dir="/out/${subfolder}/${sesfolder}/space-anat"
 fref_dir="/out/${subfolder}/${sesfolder}/fref"
@@ -78,19 +76,13 @@ apply_transform_to_timeseries() {
     rm -r "$temp_dir"
 }
 
-mkdir -p "$output_folder"
 mkdir -p "$template_transforms_dir"
 
-if [ ! -f "${template_transform_prefix}_warpfield.nii.gz" ];
-then
-  flirt -in $anat_t1w -ref "$t1_template" -out "${template_transform_prefix}_affine.nii.gz" -omat "${template_transform_prefix}_affine.mat"
-  fnirt -v --ref="$t1_template" --in="${template_transform_prefix}_affine.nii.gz" --fout="${template_transform_prefix}_warpfield.nii.gz" --iout="${template_transform_prefix}_warped.nii.gz"
-fi
-file_ref_base="${fref_dir}/func_ref_${filter_str}.nii.gz"
 # Shared functional reference
 if [ ! -f "${transform_dir}/fref_to_T1w.mat" ];
 then
   for file in ${files[@]}; do
+    file_ref_base="${fref_dir}/func_ref_${filter_str}.nii.gz"
     fslroi "$file" "$file_ref_base" 20 1
     break
   done
@@ -126,34 +118,3 @@ then
   flirt -in "$file_ref_base" -ref "$anat_t1w" -out "${transform_dir}/fref_to_T1w.nii.gz" \
               -omat "${transform_dir}/fref_to_T1w.mat" -dof 6
 fi
-
-for file in ${files[@]}; do
-    output="${output_folder}/$(basename "$file" .nii.gz)_space-MNI.nii.gz"
-    echo "Source"
-    echo "$file"
-    echo "Dest"
-
-      echo "Registering $file..."
-      file_ref="${coregdir}/$(basename "$file")"
-      transform_file="${transform_dir}/$(basename "$file" .nii.gz)_to_T1w.mat"
-
-      if [ ! -f "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat" ];
-      then
-      flirt -in "$file_ref" -ref "$file_ref_base" -out "${fref_dir}/$(basename "$file" .nii.gz)_fref.nii.gz" \
-            -omat "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat" -dof 6
-      fi
-      convert_xfm -omat "$transform_file" -concat "${transform_dir}/fref_to_T1w.mat" "${fref_dir}/$(basename "$file" .nii.gz)_fref.mat"
-
-      full_transform_file="${transform_dir}/$(basename "$file" .nii.gz)_to_MNI.nii.gz"
-      full_transform_inverse="${transform_dir}/MNI_to_$(basename "$file" .nii.gz).nii.gz"
-      pre_affine_file="${transform_dir}/$(basename "$file" .nii.gz)_to_T1template_affine.mat"
-      if [ ! -f "$output" ];
-      then
-      convert_xfm -omat "$pre_affine_file" -concat "${template_transform_prefix}_affine.mat" "${transform_file}"
-      convertwarp -r "${mni_template}" -o "${full_transform_file}" -m "$pre_affine_file" -w "${template_transform_prefix}_warpfield.nii.gz" --midmat=/out/template/T1wRef_to_MNI1mm_affine.mat --warp2=/out/template/T1wRef_to_MNI1mm_warpfield.nii.gz
-      invwarp -w "${full_transform_file}" -o "${full_transform_inverse}" -r "$file"
-      apply_transform_to_timeseries "$file" "${mni_template}" "$full_transform_file" "$output"
-
-      fi
-done
-

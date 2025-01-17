@@ -1,8 +1,8 @@
 #!/bin/bash
 bids_dir="/media/storage2/EMOATT/BIDS"
-final_out_dir=/media/storage3/derivatives/neurobox_MNI
+final_out_dir=/media/storage3/derivatives/neurobox
 derivatives_folder=${bids_dir}/derivatives/neurobox
-max_slots=10
+max_slots=15
 mkdir -p "$derivatives_folder"
 mkdir -p "$final_out_dir"
 tsp -S $max_slots
@@ -15,12 +15,18 @@ for subject_dir in "$bids_dir"/sub-*; do
         for session_dir in "$subject_dir"/ses-*; do
           if [[ -d "$session_dir/func" ]]; then
             session=$(basename "$session_dir")
-            tsp docker run -v "${session_dir}"/anat:/anat:ro \
+            prev_job_id=$(tsp docker run -v "${session_dir}"/anat:/anat:ro \
                            -v "${session_dir}"/func:/func:ro \
                            -v "${derivatives_folder}":/out \
                            -v "${session_dir}"/fmap:/fmap:ro \
                            --rm fmribox:latest \
-                           sequence_level_tasks.sh "$subject" "$session" topup
+                           sequence_level_tasks.sh "$subject" "$session")
+            tsp -D $prev_job_id docker run -v "${session_dir}"/anat:/anat:ro \
+                                           -v "${session_dir}"/func:/func:ro \
+                                           -v "${derivatives_folder}":/out \
+                                           -v "${session_dir}"/fmap:/fmap:ro \
+                                           --rm fmribox:latest \
+                                           prepare_func_to_T1w.sh "$subject" "$session"
           fi
         done
     fi
