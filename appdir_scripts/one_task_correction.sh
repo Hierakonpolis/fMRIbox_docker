@@ -348,5 +348,4 @@ then
   /usr/local/AFNIbin/3dcalc -a0 ${epi_orig} -prefix ${coregdir}/${fmri_name}.nii.gz -expr 'a*1'
 
   moco_sc ${sc_in} ${coregdir}/${fmri_name}.nii.gz ${subjectID}
-  rm -r "${mocodir}"
 fi
