@@ -19,13 +19,13 @@ for subject_dir in "$bids_dir"/sub-*; do
                            -v "${session_dir}"/func:/func:ro \
                            -v "${derivatives_folder}":/out \
                            -v "${session_dir}"/fmap:/fmap:ro \
-                           --rm fmribox:latest \
+                           --rm neurobox:latest \
                            sequence_level_tasks.sh "$subject" "$session" fugue)
             tsp -D $prev_job_id docker run -v "${session_dir}"/anat:/anat:ro \
                                            -v "${session_dir}"/func:/func:ro \
                                            -v "${derivatives_folder}":/out \
                                            -v "${session_dir}"/fmap:/fmap:ro \
-                                           --rm fmribox:latest \
+                                           --rm neurobox:latest \
                                            prepare_func_to_T1w.sh "$subject" "$session"
           fi
         done
@@ -36,7 +36,7 @@ template_job_id=$(tsp -N $max_slots docker run -v "${session_dir}"/anat:/anat:ro
                              -v "${session_dir}"/func:/func:ro \
                              -v "${derivatives_folder}":/out \
                              -v "${session_dir}"/fmap:/fmap:ro \
-                             --rm fmribox:latest \
+                             --rm neurobox:latest \
                              make_study_templates.sh)
 
 for subject_dir in "$bids_dir"/sub-*; do
@@ -53,7 +53,7 @@ for subject_dir in "$bids_dir"/sub-*; do
                                                -v "${derivatives_folder}":/out \
                                                -v "${session_dir}"/fmap:/fmap:ro \
                                                -v "${final_out_dir}":/final_out \
-                                               --rm fmribox:latest \
+                                               --rm neurobox:latest \
                                                all_to_MNI.sh "$subject" "$session"
           fi
         done

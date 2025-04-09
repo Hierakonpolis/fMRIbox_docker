@@ -162,7 +162,7 @@ function fieldmap_set() {
   fi
 # Apply correction
   dwell_time=$(jq -r '.EffectiveEchoSpacing' "$json_filepath")
-  if [ ! -f "${2}" ]; then
+  if [ ! -f "${func_fugue_corr}.nii.gz" ]; then
   fugue -i $1 --dwell="${dwell_time}" --loadfmap="${fieldmap_rads_path}" --unwarpdir=y- -u "$2"
   fi
 }
