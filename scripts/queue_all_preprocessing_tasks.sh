@@ -5,7 +5,7 @@ derivatives_folder=${bids_dir}/derivatives/neurobox_fugue
 max_slots=15
 mkdir -p "$derivatives_folder"
 mkdir -p "$final_out_dir"
-tsp -S $max_slots
+tsp tsp -S $max_slots
 # Loop through all subjects
 for subject_dir in "$bids_dir"/sub-*; do
     if [[ -d "$subject_dir" ]]; then
