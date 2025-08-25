@@ -311,7 +311,7 @@ vrefbrain=${anat_bc_ss_path}
 #  Bias Corrected Anatomical T1 Image (Head Included)
 vrefhead=${anat_bc_path}
 
-#  Suffix for Corregistered Image
+#  Suffix for Coregistered Image
 vout="${fmri_name}_ts_ds_mc_MNIreg.nii.gz"
 
 epi_orig=$func_filepath
