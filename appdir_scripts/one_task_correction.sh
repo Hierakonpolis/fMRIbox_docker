@@ -217,11 +217,8 @@ function skullstrip() {
 }
 
 # Performs slice timing correction and then uses 3dvolreg to align despiked data to one reference volume (first volume)
-function moco_sc() {
+function despike_stcorr() {
         epi_in=$1
-        ref_vol=$2
-	subjectID=$3
-
     	cd ${mocodir}
 
 	#slice timing correction
@@ -289,21 +286,25 @@ function moco_sc() {
 		3dTshift -tzero $(($SliceRef-1)) -tpattern @${fmri_name}_tshiftparams.1D -TR ${TR} -quintic -prefix ${fmri_name}_ds_st.nii.gz ${fmri_name}_ds.nii.gz
         fi
 
+}
+
+function moco() {
+          epi_in=$1
+        ref_vol=$2
+        epi_out=$3
    	#   Rotate all volumes to align with the first volume as a reference
-	3dvolreg -verbose -zpad 1 -base ${ref_vol} -heptic -prefix ${fmri_name}_ds_st_mc -1Dfile ${fmri_name}_motion.1D -1Dmatrix_save mat.${fmri_name}.1D ${fmri_name}_ds_st.nii.gz
+	3dvolreg -verbose -zpad 1 -base ${ref_vol} -heptic -prefix ${epi_in}_mc -1Dfile ${fmri_name}_motion.1D -1Dmatrix_save mat.${fmri_name}.1D ${epi_in}
 
 	echo `ls .`
 
-	if [ -f "${fmri_name}_ds_st_mc+orig.BRIK" ]; then
-		3dresample -orient RPI -inset ${fmri_name}_ds_st_mc+orig -prefix ${procdir}/${moco_out}
+	if [ -f "${epi_in}_mc+orig.BRIK" ]; then
+		3dresample -orient RPI -inset ${epi_in}_mc+orig -prefix ${epi_out}
 	else
-		3dresample -orient RPI -inset ${fmri_name}_ds_st_mc+tlrc -prefix ${procdir}/${moco_out}
+		3dresample -orient RPI -inset ${epi_in}_mc+tlrc -prefix ${epi_out}
 	fi
 
 	echo "moco done"
-
 }
-
 #  Skull Stripped Bias Corrected Anatomical T1 Image
 vrefbrain=${anat_bc_ss_path}
 
@@ -312,40 +313,44 @@ vrefbrain=${anat_bc_ss_path}
 vrefhead=${anat_bc_path}
 
 #  Suffix for Coregistered Image
-vout="${fmri_name}_ts_ds_mc_MNIreg.nii.gz"
+#vout="${fmri_name}_ts_ds_mc_MNIreg.nii.gz"
 
 epi_orig=$func_filepath
 
 
 #   Function call to Perform T1 Bias Correction and Skull Strip
 skullstrip "${anatdir}"
-func_topup_corr="${funcdir}/${fmri_name}_topup"
-func_fugue_corr="${funcdir}/${fmri_name}_fugue"
 
-if [[ (-e "$phasediff_filepath") && (-e "$biasmag2_filepath") ]]; then
-    # Both phasediff and biasmag2 files exist
-    fieldmap_set "$epi_orig" "$func_fugue_corr"
-    sc_in=${func_fugue_corr}.nii.gz
-    fmri_name="${fmri_name}_fugue"
-
-elif [[ (-e "${spin2_filepath}") && (-e "${spin2_filepath}") ]]; then
-    # Both spin echo field maps exist
-    topup_set "$epi_orig" "$func_topup_corr"
-    sc_in=${func_topup_corr}.nii.gz
-    fmri_name="${fmri_name}_topup"
-
-else
-    # Neither set of field maps exists
-    echo "Neither FUGUE nor TOPUP correction could be performed. Using original EPI."
-    sc_in=${epi_orig}
-fi
 
 moco_out="${fmri_name}_ds_st_mc.nii.gz"
-moco_out_path="${procdir}/${moco_out}"
+moco_out_path=${mocodir}/${moco_out}
 
 if [ ! -f "$moco_out_path" ];
 then
   /usr/local/AFNIbin/3dcalc -a0 ${epi_orig} -prefix ${coregdir}/${fmri_name}.nii.gz -expr 'a*1'
+  despike_stcorr ${epi_orig} ${coregdir}/${fmri_name}.nii.gz
+  # current: ${mocodir}/${fmri_name}_ds_st.nii.gz
+  moco ${mocodir}/${fmri_name}_ds_st.nii.gz ${coregdir}/${fmri_name}.nii.gz ${moco_out_path}
+  # current: ${mocodir}/${fmri_name}_ds_st_mc.nii.gz
+fi
 
-  moco_sc ${sc_in} ${coregdir}/${fmri_name}.nii.gz ${subjectID}
+func_topup_corr="${funcdir}/${fmri_name}_ds_st_mc_topup"
+func_fugue_corr="${funcdir}/${fmri_name}_ds_st_mc_fugue"
+
+if [[ (-e "$phasediff_filepath") && (-e "$biasmag2_filepath") ]]; then
+    # Both phasediff and biasmag2 files exist
+    fieldmap_set "$moco_out_path" "$func_fugue_corr"
+    final=${func_fugue_corr}.nii.gz
+    ln -f ${final} ${procdir}/${fmri_name}_ds_st_mc_fugue.nii.gz
+
+elif [[ (-e "${spin2_filepath}") && (-e "${spin2_filepath}") ]]; then
+    # Both spin echo field maps exist
+    topup_set "$moco_out_path" "$func_topup_corr"
+    final=${func_topup_corr}.nii.gz
+    ln -f ${final} ${procdir}/${fmri_name}_ds_st_mc_topup.nii.gz
+else
+    # Neither set of field maps exists
+    echo "Neither FUGUE nor TOPUP correction could be performed. Using original EPI."
+    final=${moco_out_path}
+    ln -f ${final} ${procdir}/${fmri_name}_ds_st_mc.nii.gz
 fi
