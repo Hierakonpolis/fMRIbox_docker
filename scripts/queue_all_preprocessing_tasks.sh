@@ -1,7 +1,7 @@
 #!/bin/bash
 bids_dir="/media/storage2/EMOATT/BIDS"
-final_out_dir=/media/storage3/derivatives/neurobox_MNI_fugue
-derivatives_folder=${bids_dir}/derivatives/neurobox_fugue
+final_out_dir=/media/storage3/derivatives/neurobox_MNI_topup
+derivatives_folder=${bids_dir}/derivatives/neurobox_topup
 max_slots=15
 mkdir -p "$derivatives_folder"
 mkdir -p "$final_out_dir"
@@ -20,7 +20,7 @@ for subject_dir in "$bids_dir"/sub-*; do
                            -v "${derivatives_folder}":/out \
                            -v "${session_dir}"/fmap:/fmap:ro \
                            --rm neurobox:latest \
-                           sequence_level_tasks.sh "$subject" "$session" fugue)
+                           sequence_level_tasks.sh "$subject" "$session" topup)
             tsp -D $prev_job_id docker run -v "${session_dir}"/anat:/anat:ro \
                                            -v "${session_dir}"/func:/func:ro \
                                            -v "${derivatives_folder}":/out \
