@@ -15,14 +15,14 @@ for subject_dir in "$bids_dir"/sub-*; do
         for session_dir in "$subject_dir"/ses-*; do
           if [[ -d "$session_dir/func" ]]; then
             session=$(basename "$session_dir")
-            prev_job_id=$(tsp docker run --user $(id -u):$(id -g) \
+            prev_job_id=$(tsp docker run  \
                           -v "${session_dir}"/anat:/anat:ro \
                           -v "${session_dir}"/func:/func:ro \
                           -v "${derivatives_folder}":/out \
                           -v "${session_dir}"/fmap:/fmap:ro \
                           --rm neurobox:latest \
                           sequence_level_tasks.sh "$subject" "$session" topup)
-            tsp -D $prev_job_id docker run --user $(id -u):$(id -g) \
+            tsp -D $prev_job_id docker run  \
                  -v "${session_dir}"/anat:/anat:ro \
                  -v "${session_dir}"/func:/func:ro \
                  -v "${derivatives_folder}":/out \
@@ -34,7 +34,7 @@ for subject_dir in "$bids_dir"/sub-*; do
     fi
 done
 
-template_job_id=$(tsp -N $max_slots docker run --user $(id -u):$(id -g) \
+template_job_id=$(tsp -N $max_slots docker run  \
                       -v "${session_dir}"/anat:/anat:ro \
                       -v "${session_dir}"/func:/func:ro \
                       -v "${derivatives_folder}":/out \
@@ -51,7 +51,7 @@ for subject_dir in "$bids_dir"/sub-*; do
           if [[ -d "$session_dir/func" ]]; then
             session=$(basename "$session_dir")
 
-            tsp -D $template_job_id docker run  --user $(id -u):$(id -g) \
+            tsp -D $template_job_id docker run   \
                  -v "${session_dir}"/anat:/anat:ro \
                  -v "${session_dir}"/func:/func:ro \
                  -v "${derivatives_folder}":/out \
