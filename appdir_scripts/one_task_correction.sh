@@ -341,16 +341,27 @@ if [[ (-e "$phasediff_filepath") && (-e "$biasmag2_filepath") ]]; then
     # Both phasediff and biasmag2 files exist
     fieldmap_set "$moco_out_path" "$func_fugue_corr"
     final=${func_fugue_corr}.nii.gz
-    ln -f ${final} ${procdir}/${fmri_name}_ds_st_mc_fugue.nii.gz
+    moveto=${procdir}/${fmri_name}_ds_st_mc_fugue.nii.gz
+
+    if ! ln -f ${final} ${moveto}; then
+        echo "Warning: ln command failed, but continuing..."
+    fi
 
 elif [[ (-e "${spin2_filepath}") && (-e "${spin2_filepath}") ]]; then
     # Both spin echo field maps exist
     topup_set "$moco_out_path" "$func_topup_corr"
     final=${func_topup_corr}.nii.gz
-    ln -f ${final} ${procdir}/${fmri_name}_ds_st_mc_topup.nii.gz
+    moveto=${procdir}/${fmri_name}_ds_st_mc_topup.nii.gz
+
+    if ! ln -f ${final} ${moveto}; then
+        echo "Warning: ln command failed, but continuing..."
+    fi
 else
     # Neither set of field maps exists
     echo "Neither FUGUE nor TOPUP correction could be performed. Using original EPI."
     final=${moco_out_path}
-    ln -f ${final} ${procdir}/${fmri_name}_ds_st_mc.nii.gz
+    moveto=${procdir}/${fmri_name}_ds_st_mc.nii.gz
+    if ! ln -f ${final} ${moveto}; then
+        echo "Warning: ln command failed, but continuing..."
+    fi
 fi
