@@ -201,8 +201,7 @@ anat_bc_path="${anatdir}/${anat_bc_name}"
 anat_bc_ss_path="${anatdir}/${anat_bc_ss_name}"
 function skullstrip() {
     anatdir=$1
-    #Performs the N3/4 Bias correction on the T1 and Extracts the Brain
-    if [ ! -f "${anat_bc_ss_path}" ]; then
+    if [ ! -f "${anat_bc_path}" ]; then
     N3BiasFieldCorrection 3 "$anat_filepath" "${anat_bc_path}"
 
     N4BiasFieldCorrection -d 3 -i "${anat_bc_path}" -o "${anat_bc_path}" -s 10
@@ -211,8 +210,14 @@ function skullstrip() {
     N4BiasFieldCorrection -d 3 -i "${anat_bc_path}" -o "${anat_bc_path}" -s 4
     N3BiasFieldCorrection 3 "${anat_bc_path}" "${anat_bc_path}"
     N4BiasFieldCorrection -d 3 -i "${anat_bc_path}" -o "${anat_bc_path}" -s 2
-
-    /usr/local/AFNIbin/3dSkullStrip -input "${anat_bc_path}" -prefix "${anat_bc_ss_path}" -smooth_final 2 -overwrite
+    fslorient -copyqform2sform "${anat_bc_path}"
+    fi
+    if [ ! -f "${anat_bc_ss_path}" ]; then
+    _tmp_ss="${anatdir}/tmp_ss.nii.gz"
+    /usr/local/AFNIbin/3dSkullStrip -input "${anat_bc_path}" -prefix "${_tmp_ss}" -overwrite -smooth_final 2
+    fslmaths "${_tmp_ss}" -bin "${anatdir}/tmp_mask.nii.gz"
+    fslmaths "${anat_bc_path}" -mas "${anatdir}/tmp_mask.nii.gz" "${anat_bc_ss_path}"
+    rm "${_tmp_ss}" "${anatdir}/tmp_mask.nii.gz"
     fi
 #    cd /ROBEX
 #
@@ -314,6 +319,7 @@ function moco() {
 	else
 		3dresample -orient RPI -inset ${epi_in}_mc+tlrc -prefix ${epi_out}
 	fi
+	fslreorient2std ${epi_out} ${epi_out}
 
 	echo "moco done"
 }

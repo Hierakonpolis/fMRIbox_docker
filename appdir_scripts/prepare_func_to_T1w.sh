@@ -46,34 +46,11 @@ select_highest_acq() {
 }
 
 
-# Step 2: Register all sequences in each group to T1w
 apply_transform_to_timeseries() {
-
     local input_4d="$1"
-    local ref="$2"
     local transform="$3"
     local output_4d="$4"
-    local temp_dir=$(mktemp -d)
-
-    echo "Splitting $input_4d into 3D volumes..."
-    fslsplit "$input_4d" "$temp_dir/vol_" -t
-
-    echo "Applying transform to each volume..."
-    for vol in "$temp_dir"/vol_*.nii.gz; do
-#         applywarp -i "$vol" -r "$mni_template" -o "$vol" -w "$transform"
-          if ! applywarp -i "$vol" -r "$mni_template" -o "$vol" -w "$transform"; then
-            echo "Error: applywarp failed for $vol" >&2
-            exit 1
-          fi
-          flirt -in "$vol" -ref "${mni_template_2mm}" -applyxfm -usesqform -out "$vol"
-
-    done
-
-    echo "Merging transformed volumes back into 4D timeseries..."
-    fslmerge -t "$output_4d" "$temp_dir"/vol_*.nii.gz
-
-    echo "Cleaning up temporary files..."
-    rm -r "$temp_dir"
+    applywarp --interp=spline --ref="${mni_template_2mm}" --in="$input_4d" --out="$output_4d" --warp="$transform"
 }
 
 mkdir -p "$template_transforms_dir"
