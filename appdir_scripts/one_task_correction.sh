@@ -10,7 +10,7 @@ mni_project=false
 #    Getopts is used by shell procedures to parse positional parameters.
 #    Check for the optional flags that were provided in the pd_dockerParallelized.sh script
 
-while getopts f:a:j:c:b:s:l:r:p:o:n:m: flag
+while getopts f:a:j:c:b:s:l:r:p:o:n:m:t: flag
 do
         case "${flag}" in
                 f) # -f flag was used to provide the functional MRI image file
@@ -46,6 +46,9 @@ do
 			;;
                 n) # -n flag was used to indicate not putting subject into MNI space
 			mni_project=${OPTARG}
+			;;
+                t) # -t flag provides a custom slice order file (FSL --ocustom format)
+			st_file=${OPTARG}
 			;;
         esac
 done
@@ -222,6 +225,15 @@ function despike_stcorr() {
     	cd ${mocodir}
 
 	#slice timing correction
+	# If a custom slice order file was provided (e.g. Oddball dataset):
+	if [ -n "$st_file" ]; then
+		TR=$(fslval $func_filepath pixdim4)
+		3dDespike -NEW -prefix ${fmri_name}_ds.nii.gz ${epi_in}
+		slicetimer -i ${fmri_name}_ds.nii.gz \
+		           -o ${mocodir}/${fmri_name}_ds_st.nii.gz \
+		           --ocustom=$st_file -r $TR
+		return
+	fi
 	# If json is missing:
         if [ -z "$json_file" ]
         then
