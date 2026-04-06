@@ -2,11 +2,15 @@
 
 fmri_dir=/mnt/data0/Bondi/preprocessed_fmri
 dir_2mm=${fmri_dir}/2mm
-mkdir -p dir_2mm
+mkdir -p "$dir_2mm"
 
-tsp -S 16
+max_slots=20
+prev_slots=$(tsp -S)
+
+tsp -S $max_slots
+
 for scan in "${fmri_dir}"/*.nii; do
-  scan_name=$(basename $scan)
+  scan_name=$(basename "$scan")
   out_name="${scan_name%.nii}_2mm.nii.gz"
 
       tsp docker run \
@@ -21,4 +25,4 @@ for scan in "${fmri_dir}"/*.nii; do
           -usesqform
 done
 
-tsp tsp -S 1
+tsp tsp -S $prev_slots
