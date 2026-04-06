@@ -129,6 +129,7 @@ RUN apt-get update -qq && apt-get install -y jq \
 RUN curl -O --insecure https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries
 RUN ln -s /usr/lib/x86_64-linux-gnu/libgsl.so.23 /usr/lib/x86_64-linux-gnu/libgsl.so.19
 RUN tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /usr/local/AFNIbin
+RUN pip3 install nibabel numpy
 
 ENTRYPOINT ["/neurodocker/startup.sh"]
 

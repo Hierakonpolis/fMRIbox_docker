@@ -50,6 +50,9 @@ do
                 t) # -t flag provides a custom slice order file (FSL --ocustom format)
 			st_file=${OPTARG}
 			;;
+                p) # -p flag provides an explicit subject ID (for non-BIDS datasets)
+			subjectID=${OPTARG}
+			;;
         esac
 done
 
@@ -68,8 +71,12 @@ echo "mni_project :  ${mni_project}"
 
 
 # Extract the subject ID from the functional run's file name and capture it in a variable to use later
-subjectID=$(echo "$func_file" | grep -oP "sub-[^_]+")
-sessionID=$(echo "$func_file" | grep -oP "ses-[^_]+")
+if [ -z "$subjectID" ]; then
+	subjectID=$(echo "$func_file" | grep -oP "sub-[^_]+")
+fi
+if [ -z "$sessionID" ]; then
+	sessionID=$(echo "$func_file" | grep -oP "ses-[^_]+")
+fi
 
 echo "subjectID is ${subjectID}"
 echo "sessionID is ${sessionID}"
@@ -239,8 +246,8 @@ function despike_stcorr() {
 		           --ocustom=$st_file -r $TR
 		return
 	fi
-	# If json is missing:
-        if [ -z "$json_file" ]
+	# If json is missing or json file does not exist:
+        if [ -z "$json_file" ] || [ ! -f "$json_filepath" ]
         then
                 echo "no json file was included in input text file"
 		# Get the TR value from the nii header
