@@ -2,6 +2,7 @@
 data_dir="/mnt/data0/NODDI/fMRI"
 derivatives_folder="/mnt/data0/NODDI/derivatives/neurobox_NODDI"
 final_out_dir="/mnt/data0/NODDI/derivatives/neurobox_MNI_NODDI"
+stfile_dir="/mnt/data0/NODDI/derivatives"
 max_slots=20
 prev_slots=$(tsp -S)
 
@@ -26,6 +27,7 @@ for subject_dir in "$data_dir"/*/; do
                           -v "${subject_dir}":/anat:ro \
                           -v "${subject_dir}":/func:ro \
                           -v "${derivatives_folder}":/out \
+                          -v "${stfile_dir}":/stfile:ro \
                           --rm neurobox:latest \
                           sequence_level_tasks_NODDI.sh "$subject")
 
@@ -55,4 +57,4 @@ for subject_dir in "$data_dir"/*/; do
              --rm neurobox:latest \
              all_to_MNI.sh "$subject" ""
 done
-tsp tsp -S $prev_slots
+tsp -N $max_slots tsp -S $prev_slots
